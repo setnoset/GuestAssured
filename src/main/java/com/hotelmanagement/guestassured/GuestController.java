@@ -4,12 +4,7 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.beans.FeatureDescriptor;
@@ -41,6 +36,15 @@ public class GuestController {
         return repository.findById(id).map(guest -> {
             copyProperties(newGuest, guest, getNullPropertyNames(newGuest));
             return repository.save(guest);
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @DeleteMapping("/guests/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    void deleteGuest(@PathVariable Long id) {
+        repository.findById(id).map(guest -> {
+            repository.delete(guest);
+            return guest;
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
