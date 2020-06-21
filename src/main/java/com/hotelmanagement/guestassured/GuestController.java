@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.beans.FeatureDescriptor;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
@@ -46,6 +47,30 @@ public class GuestController {
             repository.delete(guest);
             return guest;
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/guests/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    Guest getGuest(@PathVariable Long id) {
+        return repository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/guests")
+    @ResponseStatus(HttpStatus.OK)
+    List<Guest> searchGuests(@RequestParam(required = false, defaultValue = "any") String inhotel,
+                             @RequestParam(required = false, defaultValue = "0") String pageid) {
+        try {
+            switch (inhotel) {
+                case "yes":
+                    return repository.findAllInHotel(Integer.parseInt(pageid));
+                case "no":
+                    return repository.findAllNotInHotel(Integer.parseInt(pageid));
+                default:
+                    return repository.findAll(Integer.parseInt(pageid));
+            }
+        } catch (DataAccessException | java.lang.NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
     }
 
     private static String[] getNullPropertyNames(Object source) {
