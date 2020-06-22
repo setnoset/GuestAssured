@@ -7,7 +7,7 @@ CREATE TABLE guests (
     phone varchar(13)
 );
 
-CREATE TABLE check_in(
+CREATE TABLE check_in (
     id int PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     guest int NOT NULL REFERENCES guests,
     date_in timestamp NOT NULL,

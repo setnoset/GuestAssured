@@ -87,6 +87,33 @@ public class GuestController {
         }
     }
 
+    @PostMapping("/checkin")
+    @ResponseStatus(HttpStatus.CREATED)
+    CheckIn checkInGuestByLookup(@RequestBody CheckInDTO checkInDTO) {
+        Guest guest = null;
+        String lookupStr = checkInDTO.getGuestIdentifier();
+        switch (checkInDTO.getGuestIdentifierType()) {
+            case "name":
+                guest = guestRepository.findByName(lookupStr);
+                break;
+            case "document":
+                guest = guestRepository.findByDocument(lookupStr);
+                break;
+            case "phone":
+                guest = guestRepository.findByPhone(lookupStr);
+                break;
+            default:
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        CheckIn newCheckIn = new CheckIn(null, guest.getId(), checkInDTO.getDate_in(), checkInDTO.getDate_out(), checkInDTO.getParking());
+        try {
+            return checkInRepository.save(newCheckIn);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     private static String[] getNullPropertyNames(Object source) {
         final BeanWrapper wrappedSource = new BeanWrapperImpl(source);
         return Stream.of(wrappedSource.getPropertyDescriptors())

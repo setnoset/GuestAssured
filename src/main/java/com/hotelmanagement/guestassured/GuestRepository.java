@@ -8,6 +8,10 @@ import java.util.List;
 
 public interface GuestRepository extends PagingAndSortingRepository<Guest, Long> {
 
+    Guest findByName(String name);
+    Guest findByDocument(String document);
+    Guest findByPhone(String phone);
+
     List<Guest> findAllByOrderById(Pageable pageable);
 
     @Query(value = "SELECT * FROM guests ORDER BY id LIMIT 10 OFFSET 10*:pageid")
