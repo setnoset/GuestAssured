@@ -3,9 +3,9 @@
 ### Configuração
 
 Rode um servidor PostgreSQL e crie o banco de dados 'hotel'
-nele. Coloque o URL de JBDC do servidor em
-application.properties e crie as tabelas de aqcordo com o
-esquema ditado em dbini.sql.
+nele. Coloque o URL JBDC do servidor em
+application.properties e crie as tabelas de acordo com o
+esquema ditado em dbinit.sql.
 
 Para compilar o codigo, com o script da Spring, use
 ```
@@ -31,12 +31,12 @@ tente criar um novo hospede com POST /guests, enviando o json:
 }
 ```
 
-Após concluido, podera alterar dados com PATCH /guests/id,
-usando o id adquerido. Podera consultar o hospede com
-GET /guests/id. Para deletar um hospede, basta usar
+Após concluido, poderá alterar dados com PATCH /guests/id,
+usando o id adquerido. Poderá consultar o hóspede com
+GET /guests/id. Para deletar um hóspede, basta usar
 DELETE /guests/id.
 
-Faça o checkin do hospede com POST /checkin:
+Faça o check-in do hospede com POST /checkin:
 
 ```
 {
@@ -48,8 +48,8 @@ Faça o checkin do hospede com POST /checkin:
 }
 ```
 
-Se tentar fazer um outro checkin com datas inconsistentes e
-com o mesmo hospede, não vai funcionar. Vamos desta vez
+Se tentar fazer um outro check-in com datas inconsistentes e
+com o mesmo hóspede, não vai funcionar. Vamos desta vez
 ultilizar POST /guests/id para o checkin:
 
 ```
@@ -60,22 +60,22 @@ ultilizar POST /guests/id para o checkin:
 }
 ```
 
-Agora crie um novo hospede e faça um GET /guests.
-Os dois hospedes aparecerão. Usando
+Agora crie um novo hóspede e faça um GET /guests.
+Os dois hóspedes aparecerão. Usando
 
 ```
 GET /guests?inhotel=yes&pageid=k
 ```
 
-pegará uma pagina (numero k) de 10 resultados em que
-os hospedes estao no hotel atualmente. Com
+pegará uma página (numero k) de 10 resultados em que
+os hóspedes estão no hotel atualmente. Com
 
 ```
 GET /guests?inhotel=no&pageid=k
 ```
 
-terá a pagina com hospedes que não estão no hotel.
+terá a página com hóspedes que não estão no hotel.
 
-Qualquer outro parametro colocado em inhotel resulta
+Qualquer outro parâmetro colocado em inhotel resulta
 em uma busca geral, apresentando resultados independente
-de o hospede estar no hotel ou não.
+de o hóspede estar no hotel ou não.
