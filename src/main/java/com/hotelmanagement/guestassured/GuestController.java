@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.beans.FeatureDescriptor;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -15,17 +16,19 @@ import static org.springframework.beans.BeanUtils.copyProperties;
 
 @RestController
 public class GuestController {
-    private final GuestRepository repository;
+    private final GuestRepository guestRepository;
+    private final CheckInRepository checkInRepository;
 
-    public GuestController(GuestRepository repository) {
-        this.repository = repository;
+    public GuestController(GuestRepository guestRepository, CheckInRepository checkInRepository) {
+        this.guestRepository = guestRepository;
+        this.checkInRepository = checkInRepository;
     }
 
     @PostMapping("/guests")
     @ResponseStatus(HttpStatus.CREATED)
     Guest newGuest(@RequestBody Guest newGuest) {
         try {
-            return repository.save(newGuest);
+            return guestRepository.save(newGuest);
         } catch (DataAccessException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -34,17 +37,17 @@ public class GuestController {
     @PatchMapping("/guests/{id}")
     @ResponseStatus(HttpStatus.OK)
     Guest updateGuest(@RequestBody Guest newGuest, @PathVariable Long id) {
-        return repository.findById(id).map(guest -> {
+        return guestRepository.findById(id).map(guest -> {
             copyProperties(newGuest, guest, getNullPropertyNames(newGuest));
-            return repository.save(guest);
+            return guestRepository.save(guest);
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @DeleteMapping("/guests/{id}")
     @ResponseStatus(HttpStatus.OK)
     void deleteGuest(@PathVariable Long id) {
-        repository.findById(id).map(guest -> {
-            repository.delete(guest);
+        guestRepository.findById(id).map(guest -> {
+            guestRepository.delete(guest);
             return guest;
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
@@ -52,7 +55,7 @@ public class GuestController {
     @GetMapping("/guests/{id}")
     @ResponseStatus(HttpStatus.OK)
     Guest getGuest(@PathVariable Long id) {
-        return repository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return guestRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/guests")
@@ -62,13 +65,24 @@ public class GuestController {
         try {
             switch (inhotel) {
                 case "yes":
-                    return repository.findAllInHotel(Integer.parseInt(pageid));
+                    return guestRepository.findAllInHotel(Integer.parseInt(pageid));
                 case "no":
-                    return repository.findAllNotInHotel(Integer.parseInt(pageid));
+                    return guestRepository.findAllNotInHotel(Integer.parseInt(pageid));
                 default:
-                    return repository.findAll(Integer.parseInt(pageid));
+                    return guestRepository.findAll(Integer.parseInt(pageid));
             }
         } catch (DataAccessException | java.lang.NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/guests/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    CheckIn checkInGuest(@RequestBody CheckIn newCheckIn, @PathVariable(name = "id") Long guestId) {
+        newCheckIn.setGuest(guestId);
+        try {
+            return checkInRepository.save(newCheckIn);
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
     }
