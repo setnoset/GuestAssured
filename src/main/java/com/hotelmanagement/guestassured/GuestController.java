@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.beans.FeatureDescriptor;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
@@ -26,9 +26,9 @@ public class GuestController {
 
     @PostMapping("/guests")
     @ResponseStatus(HttpStatus.CREATED)
-    Guest newGuest(@RequestBody Guest newGuest) {
+    GuestDTO newGuest(@RequestBody Guest newGuest) {
         try {
-            return guestRepository.save(newGuest);
+            return GuestDTO.fromGuest(guestRepository.save(newGuest), checkInRepository);
         } catch (DataAccessException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -36,10 +36,10 @@ public class GuestController {
 
     @PatchMapping("/guests/{id}")
     @ResponseStatus(HttpStatus.OK)
-    Guest updateGuest(@RequestBody Guest newGuest, @PathVariable Long id) {
+    GuestDTO updateGuest(@RequestBody Guest newGuest, @PathVariable Long id) {
         return guestRepository.findById(id).map(guest -> {
             copyProperties(newGuest, guest, getNullPropertyNames(newGuest));
-            return guestRepository.save(guest);
+            return GuestDTO.fromGuest(guest, checkInRepository);
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -54,25 +54,32 @@ public class GuestController {
 
     @GetMapping("/guests/{id}")
     @ResponseStatus(HttpStatus.OK)
-    Guest getGuest(@PathVariable Long id) {
-        return guestRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    GuestDTO getGuest(@PathVariable Long id) {
+        Guest guest = guestRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return GuestDTO.fromGuest(guest, checkInRepository);
     }
 
     @GetMapping("/guests")
     @ResponseStatus(HttpStatus.OK)
-    List<Guest> searchGuests(@RequestParam(required = false, defaultValue = "any") String inhotel,
+    List<GuestDTO> searchGuests(@RequestParam(required = false, defaultValue = "any") String inhotel,
                              @RequestParam(required = false, defaultValue = "0") String pageid) {
         try {
-            switch (inhotel) {
-                case "yes":
-                    return guestRepository.findAllInHotel(Integer.parseInt(pageid));
-                case "no":
-                    return guestRepository.findAllNotInHotel(Integer.parseInt(pageid));
-                default:
-                    return guestRepository.findAll(Integer.parseInt(pageid));
-            }
+            return findAll(inhotel, Integer.parseInt(pageid)).stream()
+                    .map(guest -> GuestDTO.fromGuest(guest, checkInRepository))
+                    .collect(Collectors.toList());
         } catch (DataAccessException | java.lang.NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private List<Guest> findAll(String inhotel, int pageid) {
+        switch (inhotel) {
+            case "yes":
+                return guestRepository.findAllInHotel(pageid);
+            case "no":
+                return guestRepository.findAllNotInHotel(pageid);
+            default:
+                return guestRepository.findAll(pageid);
         }
     }
 
@@ -90,27 +97,28 @@ public class GuestController {
     @PostMapping("/checkin")
     @ResponseStatus(HttpStatus.CREATED)
     CheckIn checkInGuestByLookup(@RequestBody CheckInDTO checkInDTO) {
-        Guest guest = null;
-        String lookupStr = checkInDTO.getGuestIdentifier();
-        switch (checkInDTO.getGuestIdentifierType()) {
-            case "name":
-                guest = guestRepository.findByName(lookupStr);
-                break;
-            case "document":
-                guest = guestRepository.findByDocument(lookupStr);
-                break;
-            case "phone":
-                guest = guestRepository.findByPhone(lookupStr);
-                break;
-            default:
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
+        Guest guest = lookup(checkInDTO.getGuestIdentifierType(), checkInDTO.getGuestIdentifier());
+        if (guest == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         CheckIn newCheckIn = new CheckIn(null, guest.getId(), checkInDTO.getDate_in(), checkInDTO.getDate_out(), checkInDTO.getParking());
         try {
             return checkInRepository.save(newCheckIn);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private Guest lookup(String identifierType, String lookupStr) {
+        switch (identifierType) {
+            case "name":
+                return guestRepository.findByName(lookupStr);
+            case "document":
+                return guestRepository.findByDocument(lookupStr);
+            case "phone":
+                return guestRepository.findByPhone(lookupStr);
+            default:
+                return null;
         }
     }
 

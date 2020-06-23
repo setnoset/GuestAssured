@@ -2,6 +2,7 @@ package com.hotelmanagement.guestassured;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -15,16 +16,18 @@ public class CheckIn {
 
     private final @JsonProperty @Id Long id;
     private @JsonProperty Long guest;
-    private @JsonProperty LocalDateTime date_in;
-    private @JsonProperty LocalDateTime date_out;
+    @Column("date_in")
+    private final @JsonProperty LocalDateTime dateIn;
+    @Column("date_out")
+    private final @JsonProperty LocalDateTime dateOut;
     private @JsonProperty Boolean parking;
     private @JsonProperty Float price;
 
-    public CheckIn(Long id, Long guest, LocalDateTime date_in, LocalDateTime date_out, Boolean parking) {
+    public CheckIn(Long id, Long guest, LocalDateTime dateIn, LocalDateTime dateOut, Boolean parking) {
         this.id = id;
         this.guest = guest;
-        this.date_in = date_in;
-        this.date_out = date_out;
+        this.dateIn = dateIn;
+        this.dateOut = dateOut;
         this.parking = parking;
         this.price = calculatePrice();
     }
@@ -38,8 +41,8 @@ public class CheckIn {
     }
 
     private Float calculatePrice() {
-        LocalDate start = LocalDate.from(date_in);
-        LocalDate end = LocalDate.from(date_out);
+        LocalDate start = LocalDate.from(dateIn);
+        LocalDate end = LocalDate.from(dateOut);
         long days = start.until(end).getDays();
 
         long workingDayCount = 5 * (days / 7);
@@ -61,5 +64,13 @@ public class CheckIn {
 
     private float weekend_price() {
         return WEEKEND_ROOM_PRICE + (parking ? WEEKEND_PARKING_PRICE : 0);
+    }
+
+    public Float getPrice() {
+        return price;
+    }
+
+    public void setPrice(Float price) {
+        this.price = price;
     }
 }
