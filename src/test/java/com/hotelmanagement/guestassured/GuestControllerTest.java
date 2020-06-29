@@ -6,7 +6,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.annotation.Id;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -79,7 +78,7 @@ public class GuestControllerTest {
     }
 
     @Test
-    public void testNonExistingGuest() {
+    public void testGetNonExistingGuest() {
         when(guestRepositoryMock.findById(7L)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> guestController.getGuest(7L));
