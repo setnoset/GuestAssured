@@ -30,11 +30,38 @@ public class GuestDTO {
                 getLastCheckInCost(guest.getId(), repository),
                 repository.guestExpenditure(guest.getId()).orElse(0.0f)
         );
-
     }
 
     private static Float getLastCheckInCost(Long guestid, CheckInRepository repository) {
         CheckIn checkIn = repository.findFirstByGuestOrderByDateOut(guestid);
         return checkIn != null ? checkIn.getPrice() : null;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDocument() {
+        return document;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public Long getCheckInCount() {
+        return checkInCount;
+    }
+
+    public Float getLastCheckInCost() {
+        return lastCheckInCost;
+    }
+
+    public Float getTotalSpent() {
+        return totalSpent;
     }
 }
