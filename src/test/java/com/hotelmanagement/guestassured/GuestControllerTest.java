@@ -9,6 +9,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,5 +84,51 @@ public class GuestControllerTest {
         when(guestRepositoryMock.findById(7L)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> guestController.getGuest(7L));
+    }
+
+    @Test
+    public void testGuestSearch() {
+
+        List<Guest> guestPage = new ArrayList<>();
+        for (long i = 0; i < 7; i++) {
+            String suffix = Long.toString(i);
+            Guest guest = new Guest(i, "Fulano Teste " + suffix, "2978847" + suffix, "55419482261" + suffix);
+            guestPage.add(guest);
+
+            when(checkInRepositoryMock.countByGuest(i)).thenReturn(0L);
+            when(checkInRepositoryMock.findFirstByGuestOrderByDateOut(i)).thenReturn(null);
+            when(checkInRepositoryMock.guestExpenditure(i)).thenReturn(Optional.empty());
+        }
+
+        when(guestRepositoryMock.findAllInHotel(2)).thenReturn(guestPage);
+
+        List<GuestDTO> guestDtoPage = guestController.searchGuests("yes", "2");
+
+        for (int i = 0; i < 7; i++) {
+            Guest guest = guestPage.get(i);
+            GuestDTO guestDTO = guestDtoPage.get(i);
+
+            assertEquals(i, guestDTO.getId());
+            assertEquals(guest.getName(), guestDTO.getName());
+            assertEquals(guest.getDocument(), guestDTO.getDocument());
+            assertEquals(guest.getPhone(), guestDTO.getPhone());
+            assertEquals(0L, guestDTO.getCheckInCount());
+            assertNull(guestDTO.getLastCheckInCost());
+            assertEquals(0.0f, guestDTO.getTotalSpent());
+        }
+    }
+
+    @Test
+    void testGuestSearchWithZeroResults() {
+        when(guestRepositoryMock.findAllInHotel(2)).thenReturn(new ArrayList<>());
+
+        List<GuestDTO> guestDtoPage = guestController.searchGuests("yes", "2");
+
+        assertTrue(guestDtoPage.isEmpty());
+    }
+
+    @Test
+    void testGuestSearchWithBadId() {
+        assertThrows(ResponseStatusException.class, () -> guestController.searchGuests("yes", "bad"));
     }
 }
